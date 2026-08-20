@@ -1,0 +1,22 @@
+# ── secrets ──
+.env
+.env.local
+.env*.local
+
+# n8n workflow exports contain the inline HMAC secret in the "Sign Payload" node,
+# because n8n Variables are a paid-plan feature this instance does not have.
+# Committing an export would publish that secret. If you need the workflows in
+# git, strip FALLBACK_SECRET first, or move it to a Variable on a paid plan.
+n8n/*.json
+
+# ── node ──
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── misc ──
+.DS_Store
+*.log
