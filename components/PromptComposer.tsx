@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -64,6 +64,21 @@ export function PromptComposer() {
   const [targets, setTargets] = useState<string[]>(['popup']);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
+
+  // A visitor who typed on the landing page arrives here already signed in;
+  // restore that draft once rather than making them type the sentence twice.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('extgen:draft');
+      if (!raw) return;
+      sessionStorage.removeItem('extgen:draft');
+      const draft = JSON.parse(raw) as { prompt?: string; targets?: string[] };
+      if (draft.prompt) setPrompt(draft.prompt);
+      if (draft.targets?.length) setTargets(draft.targets);
+    } catch {
+      /* a malformed or unavailable draft is not worth surfacing */
+    }
+  }, []);
 
   const len = prompt.trim().length;
   const tooShort = len > 0 && len < MIN;
