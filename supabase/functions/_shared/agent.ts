@@ -12,6 +12,7 @@
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { generateJson } from "./gemini.ts";
 import { renderReport, validateExtension, type GeneratedFile } from "./mv3.ts";
+import { crossCheckDom } from "./crosscheck.ts";
 
 export interface Plan {
   ext_name: string;
@@ -21,6 +22,9 @@ export interface Plan {
   host_permissions: string[];
   manifest: Record<string, unknown>;
   files: { path: string; purpose: string; apis?: string[] }[];
+  /** Every element id the UI uses, agreed once so the file that writes the
+   *  markup and the file that queries it cannot invent different names. */
+  dom_contract?: { id: string; element: string; purpose: string }[];
 }
 
 export interface BuildResult {
@@ -83,8 +87,13 @@ ${HARD_RULES}
 RULEBOOK — every MUST is mandatory:
 ${rulebook}
 
+You must also fix the DOM contract up front: every element id the scripts will
+read or write. Each file is authored in isolation, so an id invented while
+writing the markup and an id invented while writing the script will not match
+unless you decide both here.
+
 Reply with JSON only, exactly this shape:
-{"ext_name":string,"ext_slug":string,"description":string,"permissions":string[],"host_permissions":string[],"manifest":object,"files":[{"path":string,"purpose":string,"apis":string[]}]}`;
+{"ext_name":string,"ext_slug":string,"description":string,"permissions":string[],"host_permissions":string[],"manifest":object,"files":[{"path":string,"purpose":string,"apis":string[]}],"dom_contract":[{"id":string,"element":string,"purpose":string}]}`;
 
   const user = `Plan a Chrome Manifest V3 extension for this request.
 
@@ -102,6 +111,19 @@ Return manifest.json in full, plus the list of the OTHER files to generate. Give
   if (!p.files.length) throw new Error("The planner listed no files to write.");
 
   return p;
+}
+
+function contractBlock(p: Plan): string {
+  const c = p.dom_contract ?? [];
+  if (!c.length) return "";
+  const nl = String.fromCharCode(10);
+  const rows = c
+    .map((d) => "  #" + d.id + "  (" + d.element + ") - " + d.purpose)
+    .join(nl);
+  return nl + nl +
+    "DOM CONTRACT - these ids are fixed. Markup must define exactly these, and " +
+    "scripts must look up exactly these. Do not rename, do not invent others:" +
+    nl + rows;
 }
 
 async function writeFile(
@@ -132,7 +154,7 @@ manifest.json, ${p.files.map((f) => f.path).join(", ")}
 NOW WRITE THIS ONE FILE AND NOTHING ELSE:
 path: ${file.path}
 purpose: ${file.purpose}
-chrome APIs it should use: ${(file.apis ?? []).join(", ") || "none"}`;
+chrome APIs it should use: ${(file.apis ?? []).join(", ") || "none"}${contractBlock(p)}`;
 
   const out = await generateJson<GeneratedFile>(system, user, {
     temperature: 0.15,
@@ -185,6 +207,25 @@ Return the COMPLETE corrected file set, including every file you did not change.
   return fixed;
 }
 
+/** Manifest V3 rules plus the cross-file checks. A build that passes the first
+ *  and fails the second loads in Chrome and does nothing, which is worse than
+ *  failing outright. */
+function check(files: GeneratedFile[]): { ok: boolean; errors: string[]; warnings: string[] } {
+  const mv3 = validateExtension(files);
+  const dom = crossCheckDom(files);
+  const errors = [...mv3.errors, ...dom.errors];
+  return { ok: errors.length === 0, errors, warnings: [...mv3.warnings, ...dom.warnings] };
+}
+
+function report(files: GeneratedFile[], res: { errors: string[]; warnings: string[] }): string {
+  const nl = String.fromCharCode(10);
+  const base = renderReport(validateExtension(files));
+  const extra = res.errors.filter((e) => !base.includes(e));
+  if (!extra.length) return base;
+  const lines = extra.map((e) => "- " + e).join(nl);
+  return base + nl + nl + "CROSS-FILE ERRORS:" + nl + lines;
+}
+
 function guessLanguage(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   const map: Record<string, string> = {
@@ -225,13 +266,14 @@ export async function buildExtension(
   ];
 
   await onStage("validating", `Checking ${files.length} files against the Manifest V3 rules`);
-  let result = validateExtension(files);
+
+  let result = check(files);
   let repaired = false;
 
   if (!result.ok) {
-    await onStage("repairing", `Fixing ${result.errors.length} validation errors`);
-    files = await repair(files, renderReport(result), rulebook);
-    result = validateExtension(files);
+    await onStage("repairing", `Fixing ${result.errors.length} problems`);
+    files = await repair(files, report(files, result), rulebook);
+    result = check(files);
     repaired = true;
   }
 
