@@ -1,18 +1,9 @@
-/** Shown on the dashboard only while the account has no builds yet.
- *  It sits under the composer rather than on its own route, so a new user can
- *  read what is about to happen and still start typing without navigating. */
+/** The four pipeline stages in plain language, plus how the finished build
+ *  gets installed. Rendered by the /welcome route; the page around it supplies
+ *  the heading and the call to action. */
 export function FirstRun() {
   return (
     <section className="firstrun">
-      <div className="firstrun-head">
-        <span className="eyebrow">Welcome</span>
-        <h2 className="firstrun-title">Your first extension, start to installed.</h2>
-        <p className="firstrun-sub">
-          Describe it above in a sentence or two. A build usually takes a minute or two, and you
-          can watch every stage as it happens.
-        </p>
-      </div>
-
       <ol className="firstrun-steps">
         {[
           {
@@ -64,10 +55,6 @@ export function FirstRun() {
           </li>
         </ol>
       </div>
-
-      <p className="firstrun-foot">
-        Not sure what to build? Pick one of the examples above — it fills the box for you.
-      </p>
     </section>
   );
 }

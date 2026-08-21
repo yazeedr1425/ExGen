@@ -632,3 +632,23 @@ input,textarea { font:inherit; }
   .firstrun-steps { grid-template-columns:1fr; }
   .firstrun-install { grid-template-columns:1fr; gap:18px; }
 }
+
+/* ═══════════════ /welcome ═══════════════ */
+
+.welcome-hero {
+  max-width:720px; margin:0 auto;
+  padding:72px 24px 44px;
+  display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;
+}
+.welcome-title {
+  font-size:clamp(28px,4.4vw,44px); line-height:1.1; letter-spacing:-0.032em;
+  font-weight:var(--fw-medium);
+}
+.welcome-sub {
+  max-width:560px; font-size:var(--size-body-sm); line-height:1.62; color:var(--text-muted);
+}
+.welcome-foot {
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  padding:48px 24px 72px; text-align:center;
+}
+@media (max-width:640px){ .welcome-hero { padding:48px 20px 32px; } }

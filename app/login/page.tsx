@@ -39,6 +39,11 @@ function LoginForm() {
         setBusy(false);
         return;
       }
+      // A brand-new account has nothing to look at yet, so start on the
+      // explainer instead of an empty composer.
+      router.refresh();
+      router.push('/welcome');
+      return;
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {

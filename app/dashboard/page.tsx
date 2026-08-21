@@ -1,10 +1,10 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { Job } from '@/lib/types';
 import { SiteHeader } from '@/components/SiteHeader';
 import { PromptComposer } from '@/components/PromptComposer';
 import { JobList } from '@/components/JobList';
-import { FirstRun } from '@/components/FirstRun';
 
 // Always fresh: a job list cached across navigations would show a stale status
 // right after a build finishes.
@@ -42,7 +42,14 @@ export default async function Dashboard() {
           </div>
         </section>
       ) : (
-        <FirstRun />
+        <section className="workspace-builds">
+          <div className="workspace-builds-inner row" style={{ justifyContent: 'center', gap: 8 }}>
+            <span className="tiny subtle">New here?</span>
+            <Link href="/welcome" className="tiny" style={{ textDecoration: 'underline' }}>
+              See how a build works
+            </Link>
+          </div>
+        </section>
       )}
     </>
   );
