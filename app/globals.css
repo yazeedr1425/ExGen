@@ -775,3 +775,78 @@ input,textarea { font:inherit; }
   .workspace .composer::before,
   .composer-hero::after { animation:none; }
 }
+
+/* ═══════════ orbiting composer border ═══════════
+   A conic gradient rotated by an animatable custom property, masked down to
+   the border itself so the light travels the whole perimeter rather than
+   sliding across one edge. */
+
+@property --brd-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.composer-hero,
+.workspace .composer {
+  overflow:visible;              /* the glow needs to bleed past the edge */
+  border-color:transparent;      /* the orbit ring is the border now */
+}
+
+/* crisp travelling ring */
+.composer-hero::after,
+.workspace .composer::after {
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  padding:2.5px; pointer-events:none; z-index:1;
+  background:conic-gradient(from var(--brd-angle),
+    var(--ink-150) 0deg,
+    var(--ink-150) 130deg,
+    #FCB078 178deg,
+    #F8834E 208deg,
+    #EC5F84 236deg,
+    #D65FB4 262deg,
+    #A46BE0 288deg,
+    #6E86FF 316deg,
+    var(--ink-150) 350deg,
+    var(--ink-150) 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  animation:orbit 4.5s linear infinite;
+  /* the horizontal sheen is replaced by this */
+  background-size:auto;
+}
+
+/* blurred twin underneath, for the glow */
+.composer-hero::before,
+.workspace .composer::before {
+  content:""; position:absolute; inset:-6px; border-radius:calc(var(--radius-composer) + 6px);
+  padding:9px; pointer-events:none; z-index:0;
+  background:conic-gradient(from var(--brd-angle),
+    transparent 0deg,
+    transparent 150deg,
+    rgba(252,176,120,.95) 190deg,
+    rgba(248,131,78,1) 218deg,
+    rgba(236,95,132,1) 246deg,
+    rgba(214,95,180,1) 272deg,
+    rgba(164,107,224,.95) 300deg,
+    rgba(110,134,255,.8) 326deg,
+    transparent 352deg,
+    transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  filter:blur(15px);
+  opacity:1;
+  animation:orbit 4.5s linear infinite;
+  background-size:auto;
+}
+
+@keyframes orbit { to { --brd-angle: 360deg; } }
+
+/* the textarea and toolbar must sit above both rings */
+.composer-hero > *,
+.workspace .composer > * { position:relative; z-index:2; }
+
+@media (prefers-reduced-motion:reduce) {
+  .composer-hero::after, .composer-hero::before,
+  .workspace .composer::after, .workspace .composer::before { animation:none; }
+}
