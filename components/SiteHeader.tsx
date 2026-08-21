@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Logo } from './Logo';
 
 /** The workbench / job-view top bar: wordmark, Manifest v3 badge, builds-today
  *  counter, the signed-in email and an avatar with a sign-out form behind it. */
@@ -6,8 +7,8 @@ export function SiteHeader({ email, buildsToday }: { email: string; buildsToday?
   const initial = email.trim().charAt(0).toUpperCase() || '·';
   return (
     <header className="topbar">
-      <Link href="/dashboard" className="wordmark">
-        ExtGen
+      <Link href="/dashboard">
+        <Logo size={24} />
       </Link>
       <span className="badge">Manifest v3</span>
       <span className="spacer" />

@@ -6,7 +6,7 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'sw
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'ExtGen — prompt to Chrome extension',
+  title: 'Extgen — prompt to Chrome extension',
   description: 'Describe an extension in plain English and get a working Manifest V3 build.',
 };
 

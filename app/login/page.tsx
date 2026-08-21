@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { Logo } from '@/components/Logo';
 
 function LoginForm() {
   const router = useRouter();
@@ -68,8 +69,8 @@ function LoginForm() {
           background: 'var(--surface-page)',
         }}
       >
-        <a href="/" className="wordmark">
-          ExtGen
+        <a href="/">
+          <Logo size={24} />
         </a>
       </header>
 

@@ -851,3 +851,10 @@ input,textarea { font:inherit; }
   .composer-hero::after, .composer-hero::before,
   .workspace .composer::after, .workspace .composer::before { animation:none; }
 }
+
+/* ── Extgen brand mark gradient ── */
+:root {
+  --brand-1:#F2621A; --brand-2:#F98B10; --brand-3:#FDBA14;
+  --gradient-brand:linear-gradient(120deg,var(--brand-1) 0%,var(--brand-2) 45%,var(--brand-3) 100%);
+}
+.wordmark { letter-spacing:-0.028em; }

@@ -19,7 +19,7 @@ export default async function Welcome() {
       <SiteHeader email={auth.user.email ?? ''} />
 
       <main className="welcome-hero">
-        <span className="eyebrow">Welcome to ExtGen</span>
+        <span className="eyebrow">Welcome to Extgen</span>
         <h1 className="welcome-title">
           Describe a Chrome extension.
           <br />

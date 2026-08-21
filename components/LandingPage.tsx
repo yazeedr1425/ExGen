@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LandingComposer } from '@/components/LandingComposer';
+import { Logo } from '@/components/Logo';
 
 /** The public marketing page. Rendered by app/page.tsx for signed-out
  *  visitors; kept as its own component so it can be viewed in isolation. */
@@ -8,14 +9,8 @@ export function LandingPage() {
     <div style={{ background: 'var(--surface-page)' }}>
       {/* ── header ── */}
       <header className="landing-nav">
-        <Link href="/" className="row" style={{ gap: 9, flexWrap: 'nowrap' }}>
-          <span className="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
-              <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-              <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" />
-            </svg>
-          </span>
-          <span className="wordmark">ExtGen</span>
+        <Link href="/">
+          <Logo size={26} />
         </Link>
 
         <span className="spacer" />
@@ -292,7 +287,7 @@ export function LandingPage() {
       </section>
 
       <footer className="landing-foot">
-        <span className="wordmark">ExtGen</span>
+        <Logo size={22} />
         <span className="spacer" />
         <span className="tiny subtle">Prompt to Manifest V3, validated before you download.</span>
       </footer>
