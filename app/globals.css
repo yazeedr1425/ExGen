@@ -819,8 +819,11 @@ input,textarea { font:inherit; }
 /* blurred twin underneath, for the glow */
 .composer-hero::before,
 .workspace .composer::before {
-  content:""; position:absolute; inset:-6px; border-radius:calc(var(--radius-composer) + 6px);
-  padding:9px; pointer-events:none; z-index:0;
+  content:""; position:absolute; inset:-2px; border-radius:calc(var(--radius-composer) + 2px);
+  /* the base .composer::before is a 1px hairline; without these the glow ring
+     collapses into a stray glowing bar across the top edge. */
+  height:auto; width:auto;
+  padding:4px; pointer-events:none; z-index:0;
   background:conic-gradient(from var(--brd-angle),
     transparent 0deg,
     transparent 150deg,
@@ -834,8 +837,8 @@ input,textarea { font:inherit; }
     transparent 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite:xor; mask-composite:exclude;
-  filter:blur(15px);
-  opacity:1;
+  filter:blur(7px);
+  opacity:.8;
   animation:orbit 4.5s linear infinite;
   background-size:auto;
 }
