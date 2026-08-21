@@ -144,7 +144,9 @@ export function PromptComposer() {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && canSubmit) void submit();
           }}
         />
-        <div className="composer-bar">
+        {/* Surfaces get their own row so the action row below never wraps and
+            leaves the primary button stranded on a line of its own. */}
+        <div className="composer-surfaces">
           {SURFACES.map((s) => {
             const on = targets.includes(s.id);
             return (
@@ -161,7 +163,9 @@ export function PromptComposer() {
               </button>
             );
           })}
-          <span className="vrule" style={{ margin: '0 2px' }} />
+        </div>
+
+        <div className="composer-bar">
           <span className={`tiny tnum ${counterClass}`}>
             {len} / {MAX}
           </span>

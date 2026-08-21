@@ -542,3 +542,41 @@ input,textarea { font:inherit; }
   padding:24px 28px; border-top:1px solid var(--border-subtle);
   background:var(--surface-warm);
 }
+
+/* ═══════════════ workspace (signed-in main screen) ═══════════════ */
+
+.workspace {
+  max-width:720px; margin:0 auto;
+  padding:72px 24px 40px;
+  display:flex; flex-direction:column; align-items:center; gap:22px;
+}
+.workspace-title {
+  font-size:clamp(26px,3.6vw,38px); line-height:1.12; letter-spacing:-0.03em;
+  font-weight:var(--fw-medium); text-align:center;
+}
+
+/* the composer fills the column and carries the hero treatment */
+.workspace > .stack { width:100%; gap:16px; }
+.workspace .composer { padding:20px 20px 14px; box-shadow:var(--shadow-composer); }
+.workspace .composer::before { inset:auto 0 0 0; }
+.workspace .composer-input { min-height:104px; font-size:16px; }
+
+/* examples read as a centred cloud, not a left-aligned form field */
+.workspace .stack-sm { align-items:center; gap:10px; }
+.workspace .stack-sm .row { justify-content:center; }
+
+/* recent builds sit below, quiet and out of the way */
+.workspace-builds {
+  border-top:1px solid var(--border-subtle);
+  background:var(--surface-warm);
+  padding:28px 24px 56px;
+}
+.workspace-builds-inner { max-width:720px; margin:0 auto; }
+.workspace-builds .build-item { border-color:var(--border-subtle); }
+@media (max-width:640px){ .workspace { padding:48px 20px 32px; } }
+
+/* surfaces row inside the composer */
+.composer-surfaces {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px;
+}
+.composer-surfaces + .composer-bar { margin-top:12px; padding-top:12px; border-top:1px solid var(--border-subtle); }
