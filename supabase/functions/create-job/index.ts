@@ -11,7 +11,7 @@
 // It contains ZERO AI logic. No model, no prompt engineering, no LLM key.
 // All of that lives in n8n. This function validates, records, and hands off.
 
-import { corsHeaders, json, preflight } from "../_shared/cors.ts";
+import { corsHeaders, json, preflight, withCors } from "../_shared/cors.ts";
 import { adminClient, clientIp, logApi, logEvent, requireUser } from "../_shared/db.ts";
 
 const TARGETS = ["popup", "content_script", "background", "devtools", "options"] as const;
@@ -20,7 +20,7 @@ type Target = typeof TARGETS[number];
 const PROMPT_MIN = 10;
 const PROMPT_MAX = 2000;
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   const started = Date.now();
   const pre = preflight(req);
   if (pre) return pre;
@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
     status: 201,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-});
+}));
 
 // A job that cannot start must not sit in `queued` forever — the UI needs a
 // terminal state or the spinner never stops.

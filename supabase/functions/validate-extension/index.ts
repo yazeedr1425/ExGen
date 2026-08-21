@@ -9,7 +9,7 @@
 // function at all. That keeps the endpoint off the open internet without adding
 // another shared secret to manage.
 
-import { json, preflight } from "../_shared/cors.ts";
+import { json, preflight, withCors } from "../_shared/cors.ts";
 import { GeneratedFile, renderReport, validateExtension } from "../_shared/mv3.ts";
 
 // A generated extension is a handful of small text files. Anything beyond this
@@ -17,7 +17,7 @@ import { GeneratedFile, renderReport, validateExtension } from "../_shared/mv3.t
 const MAX_FILES = 60;
 const MAX_TOTAL_CHARS = 1_000_000;
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   const pre = preflight(req);
   if (pre) return pre;
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
@@ -83,4 +83,4 @@ Deno.serve(async (req) => {
     file_count: raw.length,
     report: renderReport(result),
   });
-});
+}));

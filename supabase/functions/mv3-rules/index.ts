@@ -12,12 +12,12 @@
 //   2. The agents can additionally call it per topic for the full detail,
 //      including `should`/`info` rules, when they want more than the floor.
 
-import { json, preflight } from "../_shared/cors.ts";
+import { json, preflight, withCors } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/db.ts";
 
 const VALID_SEVERITIES = ["must", "should", "info"];
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   const pre = preflight(req);
   if (pre) return pre;
   if (req.method !== "POST" && req.method !== "GET") {
@@ -97,4 +97,4 @@ Deno.serve(async (req) => {
       ? lines.join("\n")
       : "No rules matched that filter. Valid topics: manifest, service_worker, permissions, csp, content_scripts, messaging, storage, ui, network, web_accessible_resources, i18n, packaging.",
   });
-});
+}));

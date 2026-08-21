@@ -5,12 +5,12 @@
 // that ownership is checked in one place rather than trusted to a policy
 // expression spread across storage internals.
 
-import { json, preflight } from "../_shared/cors.ts";
+import { json, preflight, withCors } from "../_shared/cors.ts";
 import { adminClient, clientIp, logApi, requireUser } from "../_shared/db.ts";
 
 const URL_TTL_SECONDS = 300;
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   const started = Date.now();
   const pre = preflight(req);
   if (pre) return pre;
@@ -73,4 +73,4 @@ Deno.serve(async (req) => {
   });
 
   return json({ url: signed.signedUrl, expires_in: URL_TTL_SECONDS });
-});
+}));

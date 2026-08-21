@@ -6,7 +6,7 @@
 //
 // Like every other function here, it contains no AI logic whatsoever.
 
-import { json, preflight } from "../_shared/cors.ts";
+import { json, preflight, withCors } from "../_shared/cors.ts";
 import { adminClient, clientIp, logApi } from "../_shared/db.ts";
 
 // Which n8n stage maps to which job status. `published` deliberately maps to
@@ -28,7 +28,7 @@ const MAX_FILE_CHARS = 200_000;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   const started = Date.now();
   const pre = preflight(req);
   if (pre) return pre;
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
   });
 
   return json({ ok: true, stage, status: status ?? job.status });
-});
+}));
 
 function str(v: unknown, max: number): string | null {
   if (v === null || v === undefined) return null;
