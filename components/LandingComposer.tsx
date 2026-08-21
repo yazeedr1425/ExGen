@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EXAMPLES } from '@/lib/examples';
 
@@ -13,6 +13,53 @@ const SURFACES = [
 
 const MAX = 2000;
 
+
+/** Types each example out, pauses, deletes it, then moves to the next — used as
+ *  a live placeholder so the empty box shows what a good prompt looks like.
+ *  Stops the moment the visitor types, and never runs under reduced motion. */
+function useTypewriter(phrases: string[], active: boolean): string {
+  const [text, setText] = useState('');
+  const phrasesRef = useRef(phrases);
+  phrasesRef.current = phrases;
+
+  useEffect(() => {
+    if (!active) return;
+
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (still) {
+      setText(phrasesRef.current[0] ?? '');
+      return;
+    }
+
+    let phrase = 0;
+    let char = 0;
+    let deleting = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const full = phrasesRef.current[phrase] ?? '';
+      char += deleting ? -1 : 1;
+      setText(full.slice(0, Math.max(0, char)));
+
+      let delay = deleting ? 18 : 34;
+      if (!deleting && char >= full.length) {
+        delay = 2000;
+        deleting = true;
+      } else if (deleting && char <= 0) {
+        deleting = false;
+        phrase = (phrase + 1) % phrasesRef.current.length;
+        delay = 400;
+      }
+      timer = setTimeout(tick, delay);
+    };
+
+    timer = setTimeout(tick, 700);
+    return () => clearTimeout(timer);
+  }, [active]);
+
+  return text;
+}
+
 /** The hero composer on the public landing page. Nothing is submitted here —
  *  the visitor is not signed in yet. The draft is stashed in sessionStorage so
  *  the dashboard composer can pick it up after login, instead of asking them to
@@ -21,6 +68,12 @@ export function LandingComposer() {
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
   const [surface, setSurface] = useState('popup');
+
+  // The animated placeholder only runs while the box is untouched.
+  const typed = useTypewriter(
+    EXAMPLES.map((e) => e.prompt),
+    prompt.length === 0,
+  );
 
   function start() {
     const text = prompt.trim();
@@ -43,7 +96,7 @@ export function LandingComposer() {
           onChange={(e) => setPrompt(e.target.value)}
           maxLength={MAX}
           rows={4}
-          placeholder="Describe your extension idea… (e.g., 'A popup that counts my open tabs and closes duplicates')"
+          placeholder={typed ? `${typed}┃` : 'Describe your extension idea…'}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') start();
           }}

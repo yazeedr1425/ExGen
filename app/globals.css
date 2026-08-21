@@ -736,3 +736,42 @@ input,textarea { font:inherit; }
 .promptcard-quote p { font-size:13px; line-height:1.6; color:var(--text-secondary); }
 .promptcard-title { font-size:var(--size-heading-xs); font-weight:var(--fw-medium); }
 @media (max-width:980px){ .promptcards { grid-template-columns:1fr; max-width:520px; } }
+
+/* ── the composer's gradient hairline drifts, so the box reads as live ── */
+.composer-hero::before,
+.workspace .composer::before {
+  background-size:220% 100%;
+  animation:drift-rule 9s linear infinite;
+}
+@keyframes drift-rule {
+  from { background-position:0% 0; }
+  to   { background-position:-220% 0; }
+}
+
+/* a soft sheen travels the composer's border alongside it */
+.composer-hero { position:relative; }
+.composer-hero::after {
+  content:""; position:absolute; inset:-1px; border-radius:inherit;
+  padding:1px; pointer-events:none;
+  background:linear-gradient(115deg,
+    rgba(248,164,130,0) 0%, rgba(248,164,130,0) 38%,
+    rgba(236,144,165,.55) 48%, rgba(198,152,213,.55) 56%,
+    rgba(208,220,254,0) 66%, rgba(208,220,254,0) 100%);
+  background-size:260% 100%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  animation:sheen 7s linear infinite;
+}
+@keyframes sheen {
+  from { background-position:120% 0; }
+  to   { background-position:-160% 0; }
+}
+
+/* placeholder caret sits a touch lighter than the text it imitates */
+.composer-input::placeholder { color:var(--text-subtle); }
+
+@media (prefers-reduced-motion:reduce) {
+  .composer-hero::before,
+  .workspace .composer::before,
+  .composer-hero::after { animation:none; }
+}
