@@ -931,3 +931,12 @@ input,textarea { font:inherit; }
 .send-btn:active:not(:disabled) { transform:scale(.94); }
 .send-btn:disabled { background:var(--ink-100); color:var(--ink-500); cursor:not-allowed; }
 .send-btn svg { width:17px; height:17px; }
+
+/* the landing's pill nav floats over the page rather than sticking to the top */
+.landing-nav { display:none; }              /* superseded by .apphead */
+.apphead-wrap { position:sticky; top:0; z-index:20; padding-top:18px; padding-bottom:2px;
+  background:linear-gradient(var(--surface-page) 55%, rgba(255,255,255,0)); }
+.apphead-nav a[href^='#'] { cursor:pointer; }
+
+/* both composers share one toolbar; keep the divider tidy at narrow widths */
+.composer-bar { row-gap:10px; }

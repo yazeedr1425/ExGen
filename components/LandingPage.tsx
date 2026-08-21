@@ -8,23 +8,25 @@ export function LandingPage() {
   return (
     <div style={{ background: 'var(--surface-page)' }}>
       {/* ── header ── */}
-      <header className="landing-nav">
-        <Link href="/">
-          <Logo size={26} />
-        </Link>
+      <div className="apphead-wrap">
+        <header className="apphead">
+          <Link href="/" aria-label="Extgen home">
+            <Logo size={22} />
+          </Link>
 
-        <span className="spacer" />
+          <span className="spacer" />
 
-        <nav className="row landing-links" style={{ gap: 26, flexWrap: 'nowrap' }}>
-          <a href="#how">How it works</a>
-          <a href="#features">Features</a>
-          <Link href="/login">Log in</Link>
-        </nav>
+          <nav className="apphead-nav">
+            <a href="#how">How it works</a>
+            <a href="#features">Features</a>
+            <Link href="/login">Log in</Link>
+          </nav>
 
-        <Link href="/login" className="btn btn-sm btn-uppercase">
-          Get started
-        </Link>
-      </header>
+          <Link href="/login" className="btn btn-sm btn-uppercase">
+            Get started
+          </Link>
+        </header>
+      </div>
 
       {/* ── hero ── */}
       <section className="hero">

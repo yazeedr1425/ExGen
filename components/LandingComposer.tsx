@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EXAMPLES } from '@/lib/examples';
+import { ExampleIcon } from './ExampleIcon';
 
 const SURFACES = [
   { id: 'popup', label: 'Popup' },
@@ -149,7 +150,7 @@ export function LandingComposer() {
               setSurface(ex.targets[0]);
             }}
           >
-            <SparkIcon />
+            <ExampleIcon name={ex.icon} tint={ex.tint} />
             {ex.label}
           </button>
         ))}
@@ -176,13 +177,6 @@ function WrenchIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M14.7 6.3a4 4 0 0 1 5 5L16 15l-3-3 1.7-5.7zM13 12l-7.5 7.5a1.8 1.8 0 0 1-2.5-2.5L10.5 9.5" />
-    </svg>
-  );
-}
-function SparkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 4v5M12 15v5M4 12h5M15 12h5M6.5 6.5l3 3M14.5 14.5l3 3M17.5 6.5l-3 3M9.5 14.5l-3 3" />
     </svg>
   );
 }

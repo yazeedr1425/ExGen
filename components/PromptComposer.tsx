@@ -1,53 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { EXAMPLES } from '@/lib/examples';
 import { ExampleIcon } from './ExampleIcon';
 
-type Surface = { id: string; label: string; icon: ReactElement };
-
-const SURFACES: Surface[] = [
-  {
-    id: 'popup',
-    label: 'Popup',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="3" y="4" width="18" height="16" rx="2" />
-        <path d="M3 9h18" />
-      </svg>
-    ),
-  },
-  {
-    id: 'content_script',
-    label: 'Content script',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M8 6l-5 6 5 6M16 6l5 6-5 6" />
-      </svg>
-    ),
-  },
-  {
-    id: 'background',
-    label: 'Service worker',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
-      </svg>
-    ),
-  },
-  {
-    id: 'options',
-    label: 'Options page',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M4 12h3M17 12h3M12 4v3M12 17v3" />
-      </svg>
-    ),
-  },
+const SURFACES = [
+  { id: 'popup', label: 'Popup' },
+  { id: 'content_script', label: 'Content script' },
+  { id: 'background', label: 'Service worker' },
+  { id: 'options', label: 'Options page' },
 ];
 
 const MIN = 10;
@@ -139,47 +102,48 @@ export function PromptComposer() {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && canSubmit) void submit();
           }}
         />
-        {/* Surfaces get their own row so the action row below never wraps and
-            leaves the primary button stranded on a line of its own. */}
-        <div className="composer-surfaces">
-          {SURFACES.map((s) => {
-            const on = targets.includes(s.id);
-            return (
-              <button
-                key={s.id}
-                type="button"
-                className={`chip chip-sm ${on ? 'on' : ''}`}
-                aria-pressed={on}
-                onClick={() => toggle(s.id)}
-                disabled={busy}
-              >
-                {s.icon}
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
-
         <div className="composer-bar">
+          <label className="chip chip-sm chip-select">
+            <WrenchIcon />
+            <select
+              value={targets[0] ?? 'popup'}
+              onChange={(e) => setTargets([e.target.value])}
+              disabled={busy}
+              aria-label="Surface"
+            >
+              {SURFACES.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown />
+          </label>
+
+          <span className="chip chip-sm" style={{ cursor: 'default' }}>
+            Manifest v3
+          </span>
+
+          <span className="vrule" style={{ margin: '0 2px' }} />
+
           <span className={`tiny tnum ${counterClass}`}>
             {len} / {MAX}
           </span>
+
           <span className="spacer" />
-          <span className="tiny subtle">⌘⏎</span>
-          <button
-            type="button"
-            className="send-btn"
-            onClick={submit}
-            disabled={!canSubmit}
-            aria-label="Build it"
-            title="Build it"
-          >
+
+          <button type="button" className="btn btn-sm" onClick={submit} disabled={!canSubmit}>
             {busy ? (
-              <span className="spinner" />
+              <>
+                <span className="spinner" /> Starting…
+              </>
             ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h13M12 5l7 7-7 7" />
-              </svg>
+              <>
+                Build it
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </>
             )}
           </button>
         </div>
@@ -218,5 +182,20 @@ export function PromptComposer() {
         </div>
       )}
     </div>
+  );
+}
+
+function ChevronDown() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 12, height: 12 }}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+function WrenchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M14.7 6.3a4 4 0 0 1 5 5L16 15l-3-3 1.7-5.7zM13 12l-7.5 7.5a1.8 1.8 0 0 1-2.5-2.5L10.5 9.5" />
+    </svg>
   );
 }
