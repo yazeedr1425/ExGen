@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { Job } from '@/lib/types';
 import { AppHeader } from '@/components/AppHeader';
@@ -10,7 +9,6 @@ export const dynamic = 'force-dynamic';
 export default async function Builds() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect('/login?next=/builds');
 
   const { data: jobs } = await supabase
     .from('jobs')
@@ -22,7 +20,7 @@ export default async function Builds() {
 
   return (
     <>
-      <AppHeader email={auth.user.email ?? ''} />
+      <AppHeader email={auth.user?.email ?? ''} />
       <main className="shell shell-narrow">
         <div className="stack">
           <div className="row">

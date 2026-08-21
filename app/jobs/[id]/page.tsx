@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { GeneratedFile, Job, JobEvent } from '@/lib/types';
 import { JobLive } from '@/components/JobLive';
@@ -12,7 +12,6 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect('/login');
 
   const [jobRes, eventsRes, filesRes] = await Promise.all([
     supabase.from('jobs').select('*').eq('id', id).maybeSingle(),
@@ -24,7 +23,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 
   return (
     <>
-      <SiteHeader email={auth.user.email ?? ''} />
+      <SiteHeader email={auth.user?.email ?? ''} />
       <main className="shell shell-narrow">
         <div className="stack">
           <Link href="/dashboard" className="tiny muted">

@@ -3,9 +3,10 @@ import { Logo } from './Logo';
 
 /** The signed-in nav: a floating pill rather than a full-width bar, carrying
  *  the mark, the section links, and an account chip with sign-out behind it. */
-export function AppHeader({ email, plan = 'Free' }: { email: string; plan?: string }) {
-  const name = email.split('@')[0] || 'account';
-  const initial = name.charAt(0).toUpperCase() || '·';
+export function AppHeader({ email, plan = 'Free' }: { email?: string; plan?: string }) {
+  const guest = !email;
+  const name = guest ? 'Guest' : email.split('@')[0];
+  const initial = guest ? 'G' : name.charAt(0).toUpperCase();
 
   return (
     <div className="apphead-wrap">
@@ -32,18 +33,24 @@ export function AppHeader({ email, plan = 'Free' }: { email: string; plan?: stri
           </Link>
         </nav>
 
-        <form action="/auth/signout" method="post">
-          <button type="submit" className="account-chip" title={`${email} — sign out`}>
-            <span className="account-avatar">{initial}</span>
-            <span className="account-meta">
-              <span className="account-name">{name}</span>
-              <span className="account-plan">{plan}</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-        </form>
+        {guest ? (
+          <Link href="/login" className="btn btn-sm btn-uppercase">
+            Sign in
+          </Link>
+        ) : (
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="account-chip" title={`${email} — sign out`}>
+              <span className="account-avatar">{initial}</span>
+              <span className="account-meta">
+                <span className="account-name">{name}</span>
+                <span className="account-plan">{plan}</span>
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+          </form>
+        )}
       </header>
     </div>
   );

@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AppHeader } from '@/components/AppHeader';
 import { PromptComposer } from '@/components/PromptComposer';
@@ -8,10 +7,8 @@ export const dynamic = 'force-dynamic';
 export default async function Dashboard() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect('/login');
-
-  const email = auth.user.email ?? '';
-  const name = email.split('@')[0] || 'there';
+  const email = auth.user?.email ?? '';
+  const name = email ? email.split('@')[0] : 'there';
 
   return (
     <>
@@ -19,7 +16,7 @@ export default async function Dashboard() {
 
       <main className="workspace">
         <p className="greeting">
-          <span className="greeting-mark">Hello, {name}</span>
+          <span className="greeting-mark">{email ? `Hello, ${name}` : 'Hello there'}</span>
         </p>
 
         <h1 className="workspace-title">

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/supabase/session';
 import { EXAMPLES } from '@/lib/examples';
 import { ExampleIcon } from './ExampleIcon';
 
@@ -69,6 +71,8 @@ export function LandingComposer() {
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
   const [surface, setSurface] = useState('popup');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // The animated placeholder only runs while the box is untouched.
   const typed = useTypewriter(
@@ -76,16 +80,52 @@ export function LandingComposer() {
     prompt.length === 0,
   );
 
-  function start() {
+  /** No sign-up wall: submit builds the extension there and then, on an
+   *  anonymous session if the visitor has none. */
+  async function start() {
     const text = prompt.trim();
-    if (text) {
-      try {
-        sessionStorage.setItem('extgen:draft', JSON.stringify({ prompt: text, targets: [surface] }));
-      } catch {
-        /* private mode — the draft is a convenience, never a requirement */
-      }
+    if (text.length < 10) return;
+
+    setBusy(true);
+    setError(null);
+
+    const supabase = createClient();
+    try {
+      await ensureSession(supabase);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not start a session.');
+      setBusy(false);
+      return;
     }
-    router.push('/login?next=/dashboard');
+
+    const { data, error: fnError } = await supabase.functions.invoke('create-job', {
+      body: { prompt: text, targets: [surface] },
+    });
+
+    if (fnError) {
+      let message = fnError.message;
+      const res = (fnError as { context?: Response }).context;
+      if (res && typeof res.json === 'function') {
+        try {
+          const body = await res.json();
+          if (body?.error) message = body.error;
+        } catch {
+          /* keep the wrapper message */
+        }
+      }
+      setError(message);
+      setBusy(false);
+      return;
+    }
+
+    const jobId = (data as { job_id?: string } | null)?.job_id;
+    if (!jobId) {
+      setError('The server accepted the request but returned no job id.');
+      setBusy(false);
+      return;
+    }
+    router.refresh();
+    router.push(`/jobs/${jobId}`);
   }
 
   return (
@@ -128,11 +168,30 @@ export function LandingComposer() {
 
           <span className="spacer" />
 
-          <button type="button" className="btn btn-sm" onClick={start}>
-            Build it <ArrowRight />
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={start}
+            disabled={busy || prompt.trim().length < 10}
+          >
+            {busy ? (
+              <>
+                <span className="spinner" /> Starting…
+              </>
+            ) : (
+              <>
+                Build it <ArrowRight />
+              </>
+            )}
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="notice notice-err" role="alert">
+          <strong>{error}</strong>
+        </div>
+      )}
 
       <p className="tiny subtle" style={{ textAlign: 'center' }}>
         Need inspiration? Click one to start building

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { SiteHeader } from '@/components/SiteHeader';
 import { FirstRun } from '@/components/FirstRun';
@@ -12,11 +11,10 @@ export const dynamic = 'force-dynamic';
 export default async function Welcome() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect('/login?next=/welcome');
 
   return (
     <>
-      <SiteHeader email={auth.user.email ?? ''} />
+      <SiteHeader email={auth.user?.email ?? ''} />
 
       <main className="welcome-hero">
         <span className="eyebrow">Welcome to Extgen</span>

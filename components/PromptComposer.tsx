@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/supabase/session';
 import { EXAMPLES } from '@/lib/examples';
 import { ExampleIcon } from './ExampleIcon';
 
@@ -56,6 +57,17 @@ export function PromptComposer() {
     setError(null);
 
     const supabase = createClient();
+
+    // No account needed: the first submit mints an anonymous user so the job
+    // has an owner and the Edge Function sees a real JWT.
+    try {
+      await ensureSession(supabase);
+    } catch (e) {
+      setError({ message: e instanceof Error ? e.message : 'Could not start a session.' });
+      setBusy(false);
+      return;
+    }
+
     const { data, error: fnError } = await supabase.functions.invoke('create-job', {
       body: { prompt: prompt.trim(), targets },
     });
@@ -84,6 +96,7 @@ export function PromptComposer() {
       setBusy(false);
       return;
     }
+    router.refresh();
     router.push(`/jobs/${jobId}`);
   }
 
