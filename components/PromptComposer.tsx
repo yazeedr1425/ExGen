@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { EXAMPLES } from '@/lib/examples';
+import { ExampleIcon } from './ExampleIcon';
 
 type Surface = { id: string; label: string; icon: ReactElement };
 
@@ -165,18 +166,20 @@ export function PromptComposer() {
           </span>
           <span className="spacer" />
           <span className="tiny subtle">⌘⏎</span>
-          <button type="button" className="btn btn-sm" onClick={submit} disabled={!canSubmit}>
+          <button
+            type="button"
+            className="send-btn"
+            onClick={submit}
+            disabled={!canSubmit}
+            aria-label="Build it"
+            title="Build it"
+          >
             {busy ? (
-              <>
-                <span className="spinner" /> Starting…
-              </>
+              <span className="spinner" />
             ) : (
-              <>
-                Build it
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h13M12 5l7 7-7 7" />
+              </svg>
             )}
           </button>
         </div>
@@ -184,13 +187,13 @@ export function PromptComposer() {
 
       {/* examples — short labels, full prompt lands in the box on click */}
       <div className="stack-sm">
-        <span className="eyebrow">Or start from an example</span>
-        <div className="row" style={{ gap: 8 }}>
+        <span className="eyebrow">Need inspiration? Click one to start building</span>
+        <div className="row" style={{ gap: 10 }}>
           {EXAMPLES.map((ex) => (
             <button
               key={ex.label}
               type="button"
-              className="chip chip-sm"
+              className="chip"
               title={ex.prompt}
               onClick={() => {
                 setPrompt(ex.prompt);
@@ -199,6 +202,7 @@ export function PromptComposer() {
               }}
               disabled={busy}
             >
+              <ExampleIcon name={ex.icon} tint={ex.tint} />
               {ex.label}
             </button>
           ))}
