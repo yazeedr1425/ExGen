@@ -2,24 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const EXAMPLES = [
-  'Pomodoro Timer',
-  'History Search',
-  'Page Highlighter',
-  'Dark Mode Everywhere',
-  'Exercise Reminder',
-  'CSS Inspector',
-];
-
-const EXAMPLE_PROMPTS: Record<string, string> = {
-  'Pomodoro Timer': 'A popup with a 25 minute pomodoro timer that badges the toolbar icon with the minutes left and notifies me when the session ends.',
-  'History Search': 'A popup that searches my browsing history by keyword and shows the ten most recent matches with their titles and dates.',
-  'Page Highlighter': 'Let me select text on any page and highlight it in yellow, and keep the highlights when I come back to that page.',
-  'Dark Mode Everywhere': 'A toggle in the popup that forces a dark colour scheme on any website by inverting its background and text colours.',
-  'Exercise Reminder': 'Remind me to stand up and stretch every 45 minutes with a desktop notification I can snooze from the popup.',
-  'CSS Inspector': 'Hover any element on a page and show its CSS selector, font size and colour in a small floating panel.',
-};
+import { EXAMPLES } from '@/lib/examples';
 
 const SURFACES = [
   { id: 'popup', label: 'Popup' },
@@ -102,15 +85,19 @@ export function LandingComposer() {
       </p>
 
       <div className="row" style={{ justifyContent: 'center', gap: 10 }}>
-        {EXAMPLES.map((name) => (
+        {EXAMPLES.map((ex) => (
           <button
-            key={name}
+            key={ex.label}
             type="button"
             className="chip"
-            onClick={() => setPrompt(EXAMPLE_PROMPTS[name])}
+            title={ex.prompt}
+            onClick={() => {
+              setPrompt(ex.prompt);
+              setSurface(ex.targets[0]);
+            }}
           >
             <SparkIcon />
-            {name}
+            {ex.label}
           </button>
         ))}
       </div>

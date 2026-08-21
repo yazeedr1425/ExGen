@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { EXAMPLES } from '@/lib/examples';
 
 type Surface = { id: string; label: string; icon: ReactElement };
 
@@ -46,13 +47,6 @@ const SURFACES: Surface[] = [
       </svg>
     ),
   },
-];
-
-const EXAMPLES = [
-  'A popup that counts my open tabs and closes duplicates',
-  'Highlight every external link on a page with a coloured outline',
-  'Save the current page title and URL to a reading list in the popup',
-  'Show a word and character count for the text I select on any page',
 ];
 
 const MIN = 10;
@@ -188,22 +182,24 @@ export function PromptComposer() {
         </div>
       </div>
 
-      {/* examples */}
+      {/* examples — short labels, full prompt lands in the box on click */}
       <div className="stack-sm">
         <span className="eyebrow">Or start from an example</span>
-        <div className="row" style={{ gap: 10 }}>
+        <div className="row" style={{ gap: 8 }}>
           {EXAMPLES.map((ex) => (
             <button
-              key={ex}
+              key={ex.label}
               type="button"
-              className="chip"
+              className="chip chip-sm"
+              title={ex.prompt}
               onClick={() => {
-                setPrompt(ex);
+                setPrompt(ex.prompt);
+                setTargets(ex.targets);
                 setError(null);
               }}
               disabled={busy}
             >
-              {ex}
+              {ex.label}
             </button>
           ))}
         </div>
