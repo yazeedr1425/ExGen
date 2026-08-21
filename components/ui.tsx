@@ -1,17 +1,16 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 
-// Presentational primitives. These hold no state and fetch nothing — they only
-// map props onto the class names defined in globals.css, so restyling the app is
-// a stylesheet edit rather than a component sweep.
+// Presentational primitives mapped onto the PlugThis component classes in
+// globals.css, so restyling stays a stylesheet edit rather than a component sweep.
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'default' | 'ghost';
-  size?: 'md' | 'lg';
+  variant?: 'primary' | 'default' | 'ghost' | 'quiet';
+  size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
 };
 
 export function Button({
-  variant = 'default',
+  variant = 'primary',
   size = 'md',
   loading = false,
   children,
@@ -21,9 +20,10 @@ export function Button({
 }: ButtonProps) {
   const classes = [
     'btn',
-    variant === 'primary' ? 'btn-primary' : '',
     variant === 'ghost' ? 'btn-ghost' : '',
+    variant === 'default' || variant === 'quiet' ? 'btn-quiet' : '',
     size === 'lg' ? 'btn-lg' : '',
+    size === 'sm' ? 'btn-sm' : '',
     className,
   ]
     .filter(Boolean)
@@ -40,53 +40,58 @@ export function Button({
 export function Card({
   children,
   flush = false,
+  pad = true,
   className = '',
 }: {
   children: ReactNode;
   flush?: boolean;
+  pad?: boolean;
   className?: string;
 }) {
-  return <div className={`card ${flush ? 'card-flush' : ''} ${className}`}>{children}</div>;
+  return (
+    <div className={`card ${flush ? 'card-flush' : pad ? 'card-pad' : ''} ${className}`}>{children}</div>
+  );
 }
 
 export function CardHead({ children }: { children: ReactNode }) {
   return <div className="card-head">{children}</div>;
 }
 
-type Tone = 'neutral' | 'active' | 'ok' | 'warn' | 'err';
+type Tone = 'neutral' | 'active' | 'ok' | 'warn' | 'err' | 'dark';
+
+const BADGE_CLASS: Record<Tone, string> = {
+  neutral: '',
+  active: 'badge-dark',
+  ok: 'badge-ok',
+  warn: 'badge-warn',
+  err: 'badge-err',
+  dark: 'badge-dark',
+};
 
 export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
-  return <span className={`badge badge-${tone}`}>{children}</span>;
+  return <span className={`badge ${BADGE_CLASS[tone]}`}>{children}</span>;
 }
 
 export function Spinner() {
   return <span className="spinner" aria-hidden="true" />;
 }
 
-export function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <div className="field">
       <label className="label">{label}</label>
       {children}
-      {hint && <div className="hint" style={{ marginTop: 4 }}>{hint}</div>}
+      {hint && <span className="field-note">{hint}</span>}
     </div>
   );
 }
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className="input" {...props} />;
+  return <input className="pill-input" {...props} />;
 }
 
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className="textarea" {...props} />;
+  return <textarea className="composer-input" {...props} />;
 }
 
 export function Notice({
@@ -99,7 +104,7 @@ export function Notice({
   children?: ReactNode;
 }) {
   return (
-    <div className={`notice notice-${tone}`} role={tone === 'err' ? 'alert' : undefined}>
+    <div className={`notice ${tone === 'err' ? 'notice-err' : ''}`} role={tone === 'err' ? 'alert' : undefined}>
       {title && <strong>{title}</strong>}
       {children}
     </div>

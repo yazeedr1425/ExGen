@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button, Card, Field, Input, Notice } from '@/components/ui';
 
 function LoginForm() {
   const router = useRouter();
@@ -34,8 +33,6 @@ function LoginForm() {
         setBusy(false);
         return;
       }
-      // With email confirmation on, signUp returns a user but no session. Say so
-      // plainly instead of bouncing to a dashboard that will redirect back here.
       if (!data.session) {
         setInfo('Account created. Check your email to confirm it, then sign in.');
         setMode('signin');
@@ -51,76 +48,113 @@ function LoginForm() {
       }
     }
 
-    // refresh() so Server Components re-render with the new session cookie before
-    // navigating; without it the dashboard can render as logged out once.
     router.refresh();
     router.push(next);
   }
 
   return (
-    <main className="shell">
-      <div style={{ maxWidth: 420, margin: '0 auto', paddingTop: 'var(--s6)' }}>
-        <Card>
-          <form className="stack" onSubmit={submit}>
-            <div>
-              <h1 style={{ fontSize: '1.3rem' }}>
-                {mode === 'signin' ? 'Sign in' : 'Create an account'}
-              </h1>
-              <p className="muted small">Free accounts get 5 generations per day.</p>
+    <div style={{ background: 'var(--surface-warm)', minHeight: '100vh' }}>
+      <header
+        className="row"
+        style={{
+          height: 56,
+          padding: '0 24px',
+          borderBottom: '1px solid var(--border-subtle)',
+          background: 'var(--surface-page)',
+        }}
+      >
+        <a href="/" className="wordmark">
+          ExtGen
+        </a>
+      </header>
+
+      <div style={{ padding: '80px 28px 96px', display: 'flex', justifyContent: 'center' }}>
+        <form
+          onSubmit={submit}
+          className="card card-pad stack"
+          style={{ width: 420, boxShadow: 'var(--shadow-md)' }}
+        >
+          <div className="stack-sm" style={{ gap: 6 }}>
+            <h1 className="heading-md">{mode === 'signin' ? 'Sign in to build.' : 'Create your account.'}</h1>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Five builds a day, free. No card.</p>
+          </div>
+
+          <div className="field">
+            <label className="label">Email</label>
+            <input
+              type="email"
+              className="pill-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              placeholder="you@example.com"
+              required
+              disabled={busy}
+            />
+          </div>
+
+          <div className="field">
+            <label className="label">Password</label>
+            <input
+              type="password"
+              className="pill-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              required
+              minLength={6}
+              disabled={busy}
+            />
+            <span className="field-note">At least 6 characters.</span>
+          </div>
+
+          {error && (
+            <div className="notice notice-err" role="alert">
+              <strong>{error}</strong>
             </div>
+          )}
+          {info && (
+            <div className="notice">
+              <strong>{info}</strong>
+            </div>
+          )}
 
-            <Field label="Email">
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-                disabled={busy}
-              />
-            </Field>
+          <button type="submit" className="btn btn-block" style={{ padding: '13px 20px' }} disabled={!canSubmit}>
+            {busy && <span className="spinner" />}
+            {mode === 'signin' ? 'Sign in' : 'Create account'}
+          </button>
 
-            <Field label="Password" hint="At least 6 characters.">
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                required
-                minLength={6}
-                disabled={busy}
-              />
-            </Field>
-
-            {error && <Notice tone="err" title={error} />}
-            {info && <Notice tone="info" title={info} />}
-
-            <Button type="submit" variant="primary" size="lg" disabled={!canSubmit} loading={busy}>
-              {mode === 'signin' ? 'Sign in' : 'Create account'}
-            </Button>
-
+          <div className="row" style={{ justifyContent: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+            {mode === 'signin' ? 'No account?' : 'Already have an account?'}
             <button
               type="button"
-              className="btn btn-ghost"
               onClick={() => {
                 setMode(mode === 'signin' ? 'signup' : 'signin');
                 setError(null);
                 setInfo(null);
               }}
               disabled={busy}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                color: 'var(--text-link)',
+                textDecoration: 'underline',
+              }}
             >
-              {mode === 'signin' ? 'No account? Create one' : 'Already have an account? Sign in'}
+              {mode === 'signin' ? 'Create one' : 'Sign in'}
             </button>
-          </form>
-        </Card>
+          </div>
+        </form>
       </div>
-    </main>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="shell" />}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--surface-warm)' }} />}>
       <LoginForm />
     </Suspense>
   );
