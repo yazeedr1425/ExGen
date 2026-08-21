@@ -80,7 +80,6 @@ export function PromptComposer() {
         try {
           const body = await res.json();
           if (body?.error) message = body.error;
-          if (res.status === 429) message = 'Daily limit reached — 5 builds per day. Try again tomorrow.';
           if (res.status === 502 || res.status === 500) hint = 'The build pipeline could not be reached. Try again in a moment.';
         } catch {
           /* keep the wrapper message */

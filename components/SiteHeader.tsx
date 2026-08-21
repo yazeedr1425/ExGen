@@ -3,7 +3,7 @@ import { Logo } from './Logo';
 
 /** The workbench / job-view top bar: wordmark, Manifest v3 badge, builds-today
  *  counter, the signed-in email and an avatar with a sign-out form behind it. */
-export function SiteHeader({ email, buildsToday }: { email: string; buildsToday?: number }) {
+export function SiteHeader({ email }: { email: string }) {
   const initial = email.trim().charAt(0).toUpperCase() || '·';
   return (
     <header className="topbar">
@@ -12,12 +12,6 @@ export function SiteHeader({ email, buildsToday }: { email: string; buildsToday?
       </Link>
       <span className="badge">Manifest v3</span>
       <span className="spacer" />
-      {typeof buildsToday === 'number' && (
-        <>
-          <span className="tiny subtle tnum">{buildsToday} of 5 builds today</span>
-          <span className="vrule" />
-        </>
-      )}
       <span className="row" style={{ gap: 7, flexWrap: 'nowrap' }}>
         <span className="tiny muted truncate" style={{ maxWidth: 180 }}>
           {email}

@@ -48,7 +48,7 @@ export function LandingPage() {
             ['4', 'agents: planner, coder, validator, repair'],
             ['42', 'Manifest V3 rules checked on every build'],
             ['0', 'build steps — plain HTML, CSS and JavaScript'],
-            ['5 / day', 'free to start'],
+            ['Free', 'no account needed to build'],
           ].map(([num, label]) => (
             <div key={label} className="stack-sm" style={{ gap: 6 }}>
               <span className="stat-num">{num}</span>
@@ -278,7 +278,7 @@ export function LandingPage() {
           Start shipping.
         </h2>
         <p style={{ fontSize: 'var(--size-body)', color: 'var(--text-muted)', maxWidth: 520 }}>
-          Five builds a day to start. The code is yours whichever plan you&apos;re on.
+          No account needed. The code is yours, every build.
         </p>
         <Link href="/login" className="btn btn-lg">
           Build your first extension

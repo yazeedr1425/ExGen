@@ -82,7 +82,7 @@ function LoginForm() {
         >
           <div className="stack-sm" style={{ gap: 6 }}>
             <h1 className="heading-md">{mode === 'signin' ? 'Sign in to build.' : 'Create your account.'}</h1>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Five builds a day, free. No card.</p>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Free to use. No card, no sign-up required.</p>
           </div>
 
           <div className="field">

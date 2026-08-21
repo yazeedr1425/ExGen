@@ -109,7 +109,6 @@ export function LandingComposer() {
         try {
           const body = await res.json();
           if (body?.error) message = body.error;
-          if (res.status === 429) message = 'Daily limit reached — 5 builds per day. Try again tomorrow.';
         } catch {
           /* keep the wrapper message */
         }
