@@ -60,6 +60,22 @@ Deno.serve(withCors(async (req) => {
   const projectId = body.project_id ? String(body.project_id) : null;
   const options = (body.options ?? {}) as Record<string, unknown>;
 
+  // ───────────────────────── quota ─────────────────────────
+  // The app is open to guests, so this is the only thing standing between a
+  // stranger and an unbounded Gemini bill. Checked before the row exists so a
+  // rate-limited caller does not litter the jobs table.
+  const { data: allowed, error: quotaError } = await db.rpc("can_create_job", { uid: user.id });
+  if (quotaError) {
+    console.error("quota check failed", quotaError);
+    return json({ error: "could not verify quota" }, 500);
+  }
+  if (allowed === false) {
+    await logApi(db, { fn: "create-job", status_code: 429, user_id: user.id, ip });
+    return json({ error: "daily build limit reached — 5 per day", retry_after: 3600 }, 429, {
+      "Retry-After": "3600",
+    });
+  }
+
   // ───────────────────────── create the job ─────────────────────────
   const { data: job, error: insertError } = await db
     .from("jobs")
