@@ -580,3 +580,55 @@ input,textarea { font:inherit; }
   display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px;
 }
 .composer-surfaces + .composer-bar { margin-top:12px; padding-top:12px; border-top:1px solid var(--border-subtle); }
+
+/* ═══════════════ first-run welcome (dashboard, zero builds) ═══════════════ */
+
+.firstrun {
+  border-top:1px solid var(--border-subtle);
+  background:var(--surface-warm);
+  padding:56px 24px 72px;
+  display:flex; flex-direction:column; align-items:center; gap:32px;
+}
+.firstrun-head {
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  text-align:center; max-width:620px;
+}
+.firstrun-title {
+  font-size:clamp(23px,3vw,30px); line-height:1.18; letter-spacing:-0.025em;
+  font-weight:var(--fw-medium);
+}
+.firstrun-sub { font-size:15px; line-height:1.6; color:var(--text-muted); }
+
+.firstrun-steps {
+  list-style:none; margin:0; padding:0; width:100%; max-width:860px;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;
+}
+.firstrun-step {
+  display:grid; grid-template-columns:38px 1fr; gap:14px;
+  background:var(--surface-card); border:1px solid var(--border-default);
+  border-radius:var(--radius-card); padding:20px;
+}
+.firstrun-num {
+  font-family:var(--font-mono); font-size:13px; color:var(--text-subtle);
+  padding-top:1px;
+}
+.firstrun-step-title { font-size:15px; font-weight:var(--fw-medium); }
+.firstrun-step-body { font-size:13.5px; line-height:1.6; color:var(--text-muted); }
+
+.firstrun-install {
+  width:100%; max-width:860px;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:28px;
+  align-items:center;
+  background:var(--surface-card); border:1px solid var(--border-default);
+  border-radius:var(--radius-card); padding:24px 26px;
+}
+.firstrun-install-steps {
+  margin:0; padding-left:1.25em; display:flex; flex-direction:column; gap:8px;
+  font-size:13.5px; line-height:1.6; color:var(--text-secondary);
+}
+.firstrun-foot { font-size:13px; color:var(--text-subtle); text-align:center; }
+
+@media (max-width:760px){
+  .firstrun-steps { grid-template-columns:1fr; }
+  .firstrun-install { grid-template-columns:1fr; gap:18px; }
+}

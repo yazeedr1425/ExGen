@@ -4,6 +4,7 @@ import type { Job } from '@/lib/types';
 import { SiteHeader } from '@/components/SiteHeader';
 import { PromptComposer } from '@/components/PromptComposer';
 import { JobList } from '@/components/JobList';
+import { FirstRun } from '@/components/FirstRun';
 
 // Always fresh: a job list cached across navigations would show a stale status
 // right after a build finishes.
@@ -34,12 +35,14 @@ export default async function Dashboard() {
         <PromptComposer />
       </main>
 
-      {list.length > 0 && (
+      {list.length > 0 ? (
         <section className="workspace-builds">
           <div className="workspace-builds-inner">
             <JobList jobs={list} />
           </div>
         </section>
+      ) : (
+        <FirstRun />
       )}
     </>
   );
