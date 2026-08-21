@@ -797,21 +797,20 @@ input,textarea { font:inherit; }
 .composer-hero::after,
 .workspace .composer::after {
   content:""; position:absolute; inset:0; border-radius:inherit;
-  padding:2.5px; pointer-events:none; z-index:1;
+  padding:1.5px; pointer-events:none; z-index:1;
   background:conic-gradient(from var(--brd-angle),
     var(--ink-150) 0deg,
-    var(--ink-150) 130deg,
-    #FCB078 178deg,
-    #F8834E 208deg,
-    #EC5F84 236deg,
-    #D65FB4 262deg,
-    #A46BE0 288deg,
-    #6E86FF 316deg,
-    var(--ink-150) 350deg,
+    var(--ink-150) 176deg,
+    var(--peach-500) 214deg,
+    var(--peach-600) 238deg,
+    var(--blush-500) 260deg,
+    var(--orchid-400) 282deg,
+    var(--peri-400) 310deg,
+    var(--ink-150) 344deg,
     var(--ink-150) 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite:xor; mask-composite:exclude;
-  animation:orbit 4.5s linear infinite;
+  animation:orbit 8s linear infinite;
   /* the horizontal sheen is replaced by this */
   background-size:auto;
 }
@@ -827,19 +826,18 @@ input,textarea { font:inherit; }
   background:conic-gradient(from var(--brd-angle),
     transparent 0deg,
     transparent 150deg,
-    rgba(252,176,120,.95) 190deg,
-    rgba(248,131,78,1) 218deg,
-    rgba(236,95,132,1) 246deg,
-    rgba(214,95,180,1) 272deg,
-    rgba(164,107,224,.95) 300deg,
-    rgba(110,134,255,.8) 326deg,
-    transparent 352deg,
+    rgba(252,176,120,.45) 200deg,
+    rgba(248,164,130,.5) 224deg,
+    rgba(236,144,165,.5) 248deg,
+    rgba(220,143,190,.45) 274deg,
+    rgba(179,192,252,.35) 306deg,
+    transparent 344deg,
     transparent 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite:xor; mask-composite:exclude;
-  filter:blur(7px);
-  opacity:.8;
-  animation:orbit 4.5s linear infinite;
+  filter:blur(6px);
+  opacity:.55;
+  animation:orbit 8s linear infinite;
   background-size:auto;
 }
 
