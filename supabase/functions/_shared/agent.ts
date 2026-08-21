@@ -54,6 +54,29 @@ HARD CONSTRAINTS (violating any of these fails the build):
 - Use version "1.0.0".
 `.trim();
 
+// Without this the coder produces workable-but-anonymous CSS: raw hex repeated
+// everywhere, no dark mode, no focus ring, and blank space where a loading or
+// empty state belongs. The rules below are deliberately concrete — "make it
+// look good" produces nothing, a required token list produces a design.
+const DESIGN_RULES = `
+DESIGN (the extension must look considered, not like an unstyled form):
+- Exactly one stylesheet. Declare tokens on :root first, then use them. Never repeat a raw hex in a rule.
+  Required: --bg --surface --text --text-muted --border --accent --accent-text --danger --ok
+            --radius (8-12px) --space-1..--space-4 (4/8/12/16px) --shadow
+- Support dark mode: redefine the colour tokens inside @media (prefers-color-scheme: dark). Never ship a
+  hardcoded white panel that becomes unreadable there.
+- A popup body is 320-380px wide with 16px padding. Never narrower than 300px.
+- Type scale: 12px labels, 14px body, 20-28px for a headline figure. One font stack, system-ui first.
+- Every interactive element defines :hover, :active, :focus-visible and :disabled. focus-visible must show a
+  visible outline; never "outline: none" on its own.
+- Buttons carry no default browser chrome: 10-12px vertical padding, 600 weight, pointer cursor, and a
+  primary action spans the popup width.
+- Show state instead of blanks — a loading state before data arrives, an empty state when a list has no
+  rows, and a brief confirmation after a destructive action.
+- Group related values into cards or rows and space everything from the scale. Nothing touches anything.
+- Icons are inline SVG. Never reference an image file.
+`.trim();
+
 /** The blocking rules, read straight from the table. The mv3-rules function
  *  did this over HTTP; in-process there is no reason to leave the isolate. */
 export async function loadRulebook(db: SupabaseClient): Promise<string> {
@@ -83,6 +106,9 @@ async function plan(prompt: string, targets: string[], rulebook: string): Promis
 ${HARD_RULES}
 - manifest.json is your own output. Never list it in files[].
 - Use the fewest files that fully deliver the request.
+- Any surface with a UI gets its own stylesheet in files[]. Plan for it; a popup with no .css is a failure.
+
+${DESIGN_RULES}
 
 RULEBOOK — every MUST is mandatory:
 ${rulebook}
@@ -137,6 +163,8 @@ Return that file complete and runnable. No markdown fences, no commentary, no TO
 
 ${HARD_RULES}
 - Reference sibling files by a path relative to the file you are writing, never with a leading slash.
+
+${DESIGN_RULES}
 
 RULEBOOK — every MUST is mandatory:
 ${rulebook}
