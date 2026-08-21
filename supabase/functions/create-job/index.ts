@@ -98,75 +98,100 @@ Deno.serve(withCors(async (req) => {
 
   await logEvent(db, job.id, "queued", "Request accepted and job created");
 
-  // ─── pre-signed upload URL: n8n PUTs the finished zip straight here, so it
-  //     never needs a Supabase key of any kind. Single-use and path-scoped.
-  const uploadPath = `${user.id}/${job.id}/extension.zip`;
-  const { data: signed, error: signError } = await db
-    .storage
-    .from("builds")
-    .createSignedUploadUrl(uploadPath);
+  // ───────────────────────── hand off to the build engine ─────────────────────────
+  // ENGINE picks who builds. "agent" is the in-process TypeScript agent, which
+  // writes files concurrently and validates without a network hop. "n8n" is the
+  // old workflow, kept so a bad deploy is one env var away from being undone.
+  const engine = (Deno.env.get("ENGINE") ?? "agent").toLowerCase();
 
-  if (signError || !signed) {
-    await fail(db, job.id, `could not mint upload url: ${signError?.message ?? "unknown"}`);
-    return json({ error: "could not prepare storage", job_id: job.id }, 500);
-  }
-
-  // supabase-js has returned this as both absolute and root-relative across
-  // versions; normalise so n8n always receives something it can PUT to.
-  const uploadUrl = signed.signedUrl.startsWith("http")
-    ? signed.signedUrl
-    : `${Deno.env.get("SUPABASE_URL")}/storage/v1${
-      signed.signedUrl.startsWith("/") ? "" : "/"
-    }${signed.signedUrl}`;
-
-  // ───────────────────────── hand off to n8n ─────────────────────────
-  const webhookUrl = Deno.env.get("N8N_GENERATE_URL");
-
-  if (!webhookUrl) {
-    await fail(db, job.id, "n8n webhook is not configured on the server");
-    return json({ error: "pipeline not configured", job_id: job.id }, 500);
-  }
-
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        job_id: job.id,
-        owner_id: user.id,
-        prompt,
-        targets,
-        options,
-        ext_slug: provisionalSlug(prompt),
-        callback_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/job-callback`,
-        upload_url: uploadUrl,
-        upload_path: uploadPath,
-      }),
-      signal: AbortSignal.timeout(15_000),
-    });
-
-    if (!res.ok) {
-      const detail = (await res.text()).slice(0, 300);
-      await fail(db, job.id, `n8n rejected the request (${res.status}): ${detail}`);
-      await logApi(db, { fn: "create-job", status_code: 502, user_id: user.id, job_id: job.id, ip });
-      return json({ error: "pipeline rejected the request", job_id: job.id }, 502);
-    }
-
-    // n8n answers immediately with its execution id; it does NOT wait for the
-    // agents to finish. That async handoff is the whole reason n8n is here.
-    let executionId: string | null = null;
+  if (engine === "agent") {
     try {
-      executionId = (await res.json())?.executionId ?? null;
-    } catch { /* a bare 200 with no body is fine */ }
+      const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-extension`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ job_id: job.id }),
+        signal: AbortSignal.timeout(15_000),
+      });
 
-    if (executionId) {
-      await db.from("jobs").update({ n8n_execution_id: String(executionId) }).eq("id", job.id);
+      if (!res.ok) {
+        const detail = (await res.text()).slice(0, 300);
+        await fail(db, job.id, `build engine rejected the job (${res.status}): ${detail}`);
+        await logApi(db, { fn: "create-job", status_code: 502, user_id: user.id, job_id: job.id, ip });
+        return json({ error: "pipeline rejected the request", job_id: job.id }, 502);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      await fail(db, job.id, `could not reach the build engine: ${msg}`);
+      await logApi(db, { fn: "create-job", status_code: 502, user_id: user.id, job_id: job.id, ip });
+      return json({ error: "pipeline unreachable", job_id: job.id }, 502);
     }
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    await fail(db, job.id, `could not reach n8n: ${msg}`);
-    await logApi(db, { fn: "create-job", status_code: 502, user_id: user.id, job_id: job.id, ip });
-    return json({ error: "pipeline unreachable", job_id: job.id }, 502);
+  } else {
+    // ── legacy: n8n over a webhook, with a pre-signed upload URL it can PUT to ──
+    const uploadPath = `${user.id}/${job.id}/extension.zip`;
+    const { data: signed, error: signError } = await db
+      .storage
+      .from("builds")
+      .createSignedUploadUrl(uploadPath);
+
+    if (signError || !signed) {
+      await fail(db, job.id, `could not mint upload url: ${signError?.message ?? "unknown"}`);
+      return json({ error: "could not prepare storage", job_id: job.id }, 500);
+    }
+
+    const uploadUrl = signed.signedUrl.startsWith("http")
+      ? signed.signedUrl
+      : `${Deno.env.get("SUPABASE_URL")}/storage/v1${
+        signed.signedUrl.startsWith("/") ? "" : "/"
+      }${signed.signedUrl}`;
+
+    const webhookUrl = Deno.env.get("N8N_GENERATE_URL");
+    if (!webhookUrl) {
+      await fail(db, job.id, "n8n webhook is not configured on the server");
+      return json({ error: "pipeline not configured", job_id: job.id }, 500);
+    }
+
+    try {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          job_id: job.id,
+          owner_id: user.id,
+          prompt,
+          targets,
+          options,
+          ext_slug: provisionalSlug(prompt),
+          callback_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/job-callback`,
+          upload_url: uploadUrl,
+          upload_path: uploadPath,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      if (!res.ok) {
+        const detail = (await res.text()).slice(0, 300);
+        await fail(db, job.id, `n8n rejected the request (${res.status}): ${detail}`);
+        await logApi(db, { fn: "create-job", status_code: 502, user_id: user.id, job_id: job.id, ip });
+        return json({ error: "pipeline rejected the request", job_id: job.id }, 502);
+      }
+
+      let executionId: string | null = null;
+      try {
+        executionId = (await res.json())?.executionId ?? null;
+      } catch { /* a bare 200 with no body is fine */ }
+
+      if (executionId) {
+        await db.from("jobs").update({ n8n_execution_id: String(executionId) }).eq("id", job.id);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      await fail(db, job.id, `could not reach n8n: ${msg}`);
+      await logApi(db, { fn: "create-job", status_code: 502, user_id: user.id, job_id: job.id, ip });
+      return json({ error: "pipeline unreachable", job_id: job.id }, 502);
+    }
   }
 
   await logApi(db, {
