@@ -66,7 +66,16 @@ DESIGN (the extension must look considered, not like an unstyled form):
 - Support dark mode: redefine the colour tokens inside @media (prefers-color-scheme: dark). Never ship a
   hardcoded white panel that becomes unreadable there.
 - A popup body is 320-380px wide with 16px padding. Never narrower than 300px.
-- Type scale: 12px labels, 14px body, 20-28px for a headline figure. One font stack, system-ui first.
+- Set "box-sizing: border-box" on everything, or a bordered button and a borderless one beside it end up
+  different heights.
+- Type scale: 12px labels, 14px body. The ONE hero figure a popup exists to show — a countdown, a count, a
+  total — is 40-56px and heavier than everything around it. Do not render it at body size.
+- Earn the hierarchy: primary text uses --text, every secondary line uses --text-muted. If two pieces of
+  text at different importance share a colour, the layout has no hierarchy.
+- A card is not a card unless it has --surface behind it, a --border, --radius and padding. Never name an
+  element a card and leave it transparent.
+- Colour carries meaning: --accent is the primary action, --danger is ONLY for destructive or failing
+  states, --ok only for success. A Start button is never red.
 - Every interactive element defines :hover, :active, :focus-visible and :disabled. focus-visible must show a
   visible outline; never "outline: none" on its own.
 - Buttons carry no default browser chrome: 10-12px vertical padding, 600 weight, pointer cursor, and a
@@ -74,6 +83,10 @@ DESIGN (the extension must look considered, not like an unstyled form):
 - Show state instead of blanks — a loading state before data arrives, an empty state when a list has no
   rows, and a brief confirmation after a destructive action.
 - Group related values into cards or rows and space everything from the scale. Nothing touches anything.
+- Controls that act on the same thing share a row. Only a lone action spans the full width; two or three
+  siblings (Start / Pause / Reset) sit side by side. Their container must itself declare
+  "display: flex" with a gap and the buttons "flex: 1" — setting flex on the children while the parent is
+  still display:block does nothing and collapses the row.
 - Icons are inline SVG. Never reference an image file.
 `.trim();
 
