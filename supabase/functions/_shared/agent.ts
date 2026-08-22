@@ -22,17 +22,6 @@ export interface Plan {
   host_permissions: string[];
   manifest: Record<string, unknown>;
   files: { path: string; purpose: string; apis?: string[] }[];
-  /** Every element id the UI uses, agreed once so the file that writes the
-   *  markup and the file that queries it cannot invent different names. */
-  dom_contract?: { id: string; element: string; purpose: string }[];
-  /** Every chrome.storage key and runtime message the files exchange, with the
-   *  unit spelled out. Names alone are not enough: one build agreed on a key
-   *  and still broke because the writer stored seconds and the reader read
-   *  milliseconds. */
-  state_contract?: {
-    storage?: { key: string; type: string; meaning: string }[];
-    messages?: { type: string; sentBy: string; handledBy: string; does: string }[];
-  };
 }
 
 export interface BuildResult {
@@ -62,39 +51,38 @@ HARD CONSTRAINTS (violating any of these fails the build):
 - Use version "1.0.0".
 `.trim();
 
-// Without this the coder produces workable-but-anonymous CSS: raw hex repeated
-// everywhere, no dark mode, no focus ring, and blank space where a loading or
-// empty state belongs. The rules below are deliberately concrete — "make it
-// look good" produces nothing, a required token list produces a design.
+// The coder writes the whole extension in one call, so it can design freely and
+// stay internally consistent. What stays mandatory here is only the floor a
+// user would notice as broken — contrast, focus, dark mode, hit targets. The
+// look itself is the model's to choose; prescribing exact tokens and pixel
+// sizes made every extension come out identical.
 const DESIGN_RULES = `
-DESIGN (the extension must look considered, not like an unstyled form):
-- Exactly one stylesheet. Declare tokens on :root first, then use them. Never repeat a raw hex in a rule.
-  Required: --bg --surface --text --text-muted --border --accent --accent-text --danger --ok
-            --radius (8-12px) --space-1..--space-4 (4/8/12/16px) --shadow
-- Support dark mode: redefine the colour tokens inside @media (prefers-color-scheme: dark). Never ship a
-  hardcoded white panel that becomes unreadable there.
-- A popup body is 320-380px wide with 16px padding. Never narrower than 300px.
-- Set "box-sizing: border-box" on everything, or a bordered button and a borderless one beside it end up
-  different heights.
-- Type scale: 12px labels, 14px body. The ONE hero figure a popup exists to show — a countdown, a count, a
-  total — is 40-56px and heavier than everything around it. Do not render it at body size.
-- Earn the hierarchy: primary text uses --text, every secondary line uses --text-muted. If two pieces of
-  text at different importance share a colour, the layout has no hierarchy.
-- A card is not a card unless it has --surface behind it, a --border, --radius and padding. Never name an
-  element a card and leave it transparent.
-- Colour carries meaning: --accent is the primary action, --danger is ONLY for destructive or failing
-  states, --ok only for success. A Start button is never red.
-- Every interactive element defines :hover, :active, :focus-visible and :disabled. focus-visible must show a
-  visible outline; never "outline: none" on its own.
-- Buttons carry no default browser chrome: 10-12px vertical padding, 600 weight, pointer cursor, and a
-  primary action spans the popup width.
-- Show state instead of blanks — a loading state before data arrives, an empty state when a list has no
-  rows, and a brief confirmation after a destructive action.
-- Group related values into cards or rows and space everything from the scale. Nothing touches anything.
-- Controls that act on the same thing share a row. Only a lone action spans the full width; two or three
-  siblings (Start / Pause / Reset) sit side by side. Their container must itself declare
-  "display: flex" with a gap and the buttons "flex: 1" — setting flex on the children while the parent is
-  still display:block does nothing and collapses the row.
+DESIGN — you are the designer. Choose a visual direction that suits THIS extension
+and commit to it. A tab manager and a pomodoro timer should not look like the same
+template.
+
+Decide for yourself: the palette, the type treatment, density, whether the surface
+is flat or layered, how the hero element is framed. Give the extension a point of
+view rather than a default one.
+
+What is not optional, because a user notices these as broken:
+- Declare your colours as :root tokens and use them; never repeat a raw hex in rules.
+- Redefine those tokens under @media (prefers-color-scheme: dark). Both themes must
+  be legible — no white panel that stays white in dark mode.
+- Text contrast at least 4.5:1 against its own background, in both themes.
+- Hierarchy must be visible: the thing the popup exists to show dominates, secondary
+  text recedes. If two levels share a size and a colour, there is no hierarchy.
+- box-sizing: border-box everywhere, or bordered and borderless controls beside each
+  other end up different heights.
+- Every interactive element defines :hover, :active, :focus-visible and :disabled.
+  focus-visible shows a real outline; never "outline: none" alone.
+- Hit targets at least 32px tall. Popup body 320-400px wide.
+- Colour carries meaning: the primary action is not the danger colour.
+- Controls acting on the same thing share a row — their container declares
+  display:flex with a gap, and the buttons flex:1. Setting flex on children while
+  the parent is display:block collapses the row.
+- Show state instead of blanks: something to look at while data loads, an empty
+  state when a list has no rows, feedback after a destructive action.
 - Icons are inline SVG. Never reference an image file.
 `.trim();
 
@@ -134,22 +122,8 @@ ${DESIGN_RULES}
 RULEBOOK — every MUST is mandatory:
 ${rulebook}
 
-You must also fix two contracts up front, because each file is authored in
-isolation and cannot see the others:
-
-1. dom_contract - every element id the scripts read or write. An id invented
-   while writing the markup and one invented while writing the script will not
-   match unless you decide both here.
-
-2. state_contract - every chrome.storage key and every runtime message the
-   files exchange. Give each storage key an explicit type AND unit
-   ("number, seconds remaining" - not just "number"), and name which file
-   sends and which handles each message. A build already shipped broken
-   because one file wrote seconds under "timeLeft" and another read
-   milliseconds from "remaining".
-
 Reply with JSON only, exactly this shape:
-{"ext_name":string,"ext_slug":string,"description":string,"permissions":string[],"host_permissions":string[],"manifest":object,"files":[{"path":string,"purpose":string,"apis":string[]}],"dom_contract":[{"id":string,"element":string,"purpose":string}],"state_contract":{"storage":[{"key":string,"type":string,"meaning":string}],"messages":[{"type":string,"sentBy":string,"handledBy":string,"does":string}]}}`;
+{"ext_name":string,"ext_slug":string,"description":string,"permissions":string[],"host_permissions":string[],"manifest":object,"files":[{"path":string,"purpose":string,"apis":string[]}],}`;
 
   const user = `Plan a Chrome Manifest V3 extension for this request.
 
@@ -169,92 +143,77 @@ Return manifest.json in full, plus the list of the OTHER files to generate. Give
   return p;
 }
 
-function contractBlock(p: Plan): string {
-  const nl = String.fromCharCode(10);
-  const out: string[] = [];
 
-  const dom = p.dom_contract ?? [];
-  if (dom.length) {
-    out.push(
-      nl + nl +
-        "DOM CONTRACT - these ids are fixed. Markup must define exactly these, and " +
-        "scripts must look up exactly these. Do not rename, do not invent others:" +
-        nl +
-        dom.map((d) => "  #" + d.id + "  (" + d.element + ") - " + d.purpose).join(nl),
-    );
-  }
+/** Writes every file in ONE call.
+ *
+ *  This is the fix for the whole family of bugs that kept shipping: an id, a
+ *  message type, a storage key or a unit agreed in one file and contradicted in
+ *  another. Each file used to be written in its own call, blind to the rest, so
+ *  every one of them invented plausible names and nothing reconciled them.
+ *  Contracts in the plan patched around it; writing them together removes the
+ *  seam instead.
+ *
+ *  The original reason for splitting was output truncation. That is now handled
+ *  head-on: MAX_TOKENS surfaces as a retryable error from the client, and a
+ *  short file set costs far less than the 32k ceiling. */
+async function writeAllFiles(p: Plan, rulebook: string): Promise<GeneratedFile[]> {
+  const system = `You are a senior Chrome extension engineer AND its designer. You write the COMPLETE file set for one Manifest V3 extension in a single response.
 
-  const store = p.state_contract?.storage ?? [];
-  if (store.length) {
-    out.push(
-      nl + nl +
-        "STORAGE CONTRACT - exact key names and units. Read and write only these, " +
-        "in exactly these units. A value stored in seconds and read as milliseconds " +
-        "is silently wrong:" +
-        nl +
-        store.map((s) => "  " + s.key + "  : " + s.type + " - " + s.meaning).join(nl),
-    );
-  }
+Because you write every file at once, they must agree with each other exactly:
+- an id in the markup is the id the script looks up
+- a message string a sender uses is the string its listener compares against, character for character
+- a chrome.storage key one file writes is the key another reads, storing the SAME unit
+- a file a page references is a file you actually return
 
-  const msgs = p.state_contract?.messages ?? [];
-  if (msgs.length) {
-    out.push(
-      nl + nl +
-        "MESSAGE CONTRACT - exact type strings, case sensitive. The sender and the " +
-        "listener must use the identical string:" +
-        nl +
-        msgs.map((m) =>
-          "  " + m.type + "  : " + m.sentBy + " -> " + m.handledBy + " - " + m.does
-        ).join(nl),
-    );
-  }
-
-  return out.join("");
-}
-
-async function writeFile(
-  p: Plan,
-  file: Plan["files"][number],
-  rulebook: string,
-): Promise<GeneratedFile> {
-  const system = `You are a senior Chrome extension engineer. You write exactly ONE file of a Manifest V3 extension.
-
-Return that file complete and runnable. No markdown fences, no commentary, no TODOs, no placeholder comments standing in for real logic.
+Every file complete and runnable. No markdown fences, no commentary, no TODOs, no placeholder standing in for real logic.
 
 ${HARD_RULES}
-- Reference sibling files by a path relative to the file you are writing, never with a leading slash.
+- Reference sibling files by a path relative to the file that references them, never with a leading slash.
 
 ${DESIGN_RULES}
 
 RULEBOOK — every MUST is mandatory:
 ${rulebook}
 
-Reply with JSON only: {"path":string,"content":string,"language":string}`;
+Reply with JSON only: {"files":[{"path":string,"content":string,"language":string}]}`;
 
   const user = `EXTENSION: ${p.ext_name} — ${p.description}
 
-manifest.json is already final. Do not contradict it:
+manifest.json is already final. Every file must agree with it:
 ${JSON.stringify(p.manifest, null, 2)}
 
-EVERY FILE IN THIS EXTENSION (for cross-references):
-manifest.json, ${p.files.map((f) => f.path).join(", ")}
+WRITE ALL OF THESE FILES, and nothing else:
+${p.files.map((f) => `- ${f.path} — ${f.purpose}${(f.apis ?? []).length ? ` (uses ${(f.apis ?? []).join(", ")})` : ""}`).join("\n")}
 
-NOW WRITE THIS ONE FILE AND NOTHING ELSE:
-path: ${file.path}
-purpose: ${file.purpose}
-chrome APIs it should use: ${(file.apis ?? []).join(", ") || "none"}${contractBlock(p)}`;
+Design the interface as you see fit for this extension. Return every file in one JSON array.`;
 
-  const out = await generateJson<GeneratedFile>(system, user, {
-    temperature: 0.15,
-    maxOutputTokens: 16384,
+  const out = await generateJson<{ files: GeneratedFile[] }>(system, user, {
+    temperature: 0.3,
+    maxOutputTokens: 32768,
   });
 
-  // Trust the plan's path over the model's — it is the one the manifest agrees with.
-  return {
-    path: file.path,
-    content: String(out?.content ?? ""),
-    language: out?.language ?? guessLanguage(file.path),
-  };
+  const returned = (out?.files ?? []).filter((f) => f?.path && f.path !== "manifest.json");
+  if (!returned.length) throw new Error("The coder returned no files.");
+
+  // Keep the plan's paths authoritative — the manifest was written against them.
+  const byPath = new Map(returned.map((f) => [String(f.path), f]));
+  const missing: string[] = [];
+  const files = p.files.map((planned) => {
+    const got = byPath.get(planned.path) ??
+      // tolerate a leading "./" or a differing directory depth
+      returned.find((f) => String(f.path).replace(/^\.\//, "").endsWith(planned.path.split("/").pop()!));
+    if (!got || !String(got.content ?? "").trim()) missing.push(planned.path);
+    return {
+      path: planned.path,
+      content: String(got?.content ?? ""),
+      language: got?.language ?? guessLanguage(planned.path),
+    };
+  });
+
+  if (missing.length) {
+    throw new Error(`The coder skipped ${missing.join(", ")}. Truncated or incomplete response.`);
+  }
+  return files;
 }
 
 async function repair(
@@ -345,8 +304,9 @@ export async function buildExtension(
     planned_files: p.files.map((f) => f.path),
   });
 
-  // The whole point of leaving n8n: these overlap instead of queueing.
-  const written = await Promise.all(p.files.map((f) => writeFile(p, f, rulebook)));
+  // One call, every file in view of every other. Slower than fanning out, and
+  // worth it: the parallel version could not see what it was contradicting.
+  const written = await writeAllFiles(p, rulebook);
 
   let files: GeneratedFile[] = [
     { path: "manifest.json", content: JSON.stringify(p.manifest, null, 2), language: "json" },
