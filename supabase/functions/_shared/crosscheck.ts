@@ -156,10 +156,17 @@ function checkStorage(files: GeneratedFile[], errors: string[]) {
 
   for (const [key, where] of read) {
     if (written.has(key)) continue;
+    // An extension is self-contained: nothing else writes its storage. A key
+    // that is read but never written is always undefined, whether or not it
+    // resembles one that is written. Skipping the dissimilar ones let
+    // popup.js read "remaining" while background.js wrote "timeLeft".
     const near = closest(key, [...written]);
-    if (!near) continue; // unrelated key, probably a genuine default read
     errors.push(
-      `${where.join(", ")} reads storage key "${key}" but the code only ever writes "${near}". The value will always be undefined.`,
+      near
+        ? `${where.join(", ")} reads storage key "${key}" but the code only ever writes "${near}". The value is always undefined.`
+        : `${where.join(", ")} reads storage key "${key}", which no file ever writes (the code writes ${
+          [...written].map((k) => `"${k}"`).join(", ")
+        }). The value is always undefined.`,
     );
   }
 }

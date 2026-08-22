@@ -25,6 +25,14 @@ export interface Plan {
   /** Every element id the UI uses, agreed once so the file that writes the
    *  markup and the file that queries it cannot invent different names. */
   dom_contract?: { id: string; element: string; purpose: string }[];
+  /** Every chrome.storage key and runtime message the files exchange, with the
+   *  unit spelled out. Names alone are not enough: one build agreed on a key
+   *  and still broke because the writer stored seconds and the reader read
+   *  milliseconds. */
+  state_contract?: {
+    storage?: { key: string; type: string; meaning: string }[];
+    messages?: { type: string; sentBy: string; handledBy: string; does: string }[];
+  };
 }
 
 export interface BuildResult {
@@ -126,13 +134,22 @@ ${DESIGN_RULES}
 RULEBOOK — every MUST is mandatory:
 ${rulebook}
 
-You must also fix the DOM contract up front: every element id the scripts will
-read or write. Each file is authored in isolation, so an id invented while
-writing the markup and an id invented while writing the script will not match
-unless you decide both here.
+You must also fix two contracts up front, because each file is authored in
+isolation and cannot see the others:
+
+1. dom_contract - every element id the scripts read or write. An id invented
+   while writing the markup and one invented while writing the script will not
+   match unless you decide both here.
+
+2. state_contract - every chrome.storage key and every runtime message the
+   files exchange. Give each storage key an explicit type AND unit
+   ("number, seconds remaining" - not just "number"), and name which file
+   sends and which handles each message. A build already shipped broken
+   because one file wrote seconds under "timeLeft" and another read
+   milliseconds from "remaining".
 
 Reply with JSON only, exactly this shape:
-{"ext_name":string,"ext_slug":string,"description":string,"permissions":string[],"host_permissions":string[],"manifest":object,"files":[{"path":string,"purpose":string,"apis":string[]}],"dom_contract":[{"id":string,"element":string,"purpose":string}]}`;
+{"ext_name":string,"ext_slug":string,"description":string,"permissions":string[],"host_permissions":string[],"manifest":object,"files":[{"path":string,"purpose":string,"apis":string[]}],"dom_contract":[{"id":string,"element":string,"purpose":string}],"state_contract":{"storage":[{"key":string,"type":string,"meaning":string}],"messages":[{"type":string,"sentBy":string,"handledBy":string,"does":string}]}}`;
 
   const user = `Plan a Chrome Manifest V3 extension for this request.
 
@@ -153,16 +170,46 @@ Return manifest.json in full, plus the list of the OTHER files to generate. Give
 }
 
 function contractBlock(p: Plan): string {
-  const c = p.dom_contract ?? [];
-  if (!c.length) return "";
   const nl = String.fromCharCode(10);
-  const rows = c
-    .map((d) => "  #" + d.id + "  (" + d.element + ") - " + d.purpose)
-    .join(nl);
-  return nl + nl +
-    "DOM CONTRACT - these ids are fixed. Markup must define exactly these, and " +
-    "scripts must look up exactly these. Do not rename, do not invent others:" +
-    nl + rows;
+  const out: string[] = [];
+
+  const dom = p.dom_contract ?? [];
+  if (dom.length) {
+    out.push(
+      nl + nl +
+        "DOM CONTRACT - these ids are fixed. Markup must define exactly these, and " +
+        "scripts must look up exactly these. Do not rename, do not invent others:" +
+        nl +
+        dom.map((d) => "  #" + d.id + "  (" + d.element + ") - " + d.purpose).join(nl),
+    );
+  }
+
+  const store = p.state_contract?.storage ?? [];
+  if (store.length) {
+    out.push(
+      nl + nl +
+        "STORAGE CONTRACT - exact key names and units. Read and write only these, " +
+        "in exactly these units. A value stored in seconds and read as milliseconds " +
+        "is silently wrong:" +
+        nl +
+        store.map((s) => "  " + s.key + "  : " + s.type + " - " + s.meaning).join(nl),
+    );
+  }
+
+  const msgs = p.state_contract?.messages ?? [];
+  if (msgs.length) {
+    out.push(
+      nl + nl +
+        "MESSAGE CONTRACT - exact type strings, case sensitive. The sender and the " +
+        "listener must use the identical string:" +
+        nl +
+        msgs.map((m) =>
+          "  " + m.type + "  : " + m.sentBy + " -> " + m.handledBy + " - " + m.does
+        ).join(nl),
+    );
+  }
+
+  return out.join("");
 }
 
 async function writeFile(
